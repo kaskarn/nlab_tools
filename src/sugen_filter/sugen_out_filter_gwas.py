@@ -32,7 +32,7 @@ print "trait:", trait
 output_file = open(file_out, 'w')
 output_filt = open(file_filt, 'w')
 
-actg=["a", "c", "g", "t"]
+actg=["a", "c", "g", "t", "A", "C", "T", "G"]
 nfile = 0
 pos_col = -1
 chr_col = -1
@@ -87,8 +87,8 @@ for file_input in files_input:
             ref_col = i
           elif arr[i] == "ALT":
             alt_col = i
-        output_file.write("CPTID\t"+line+"\tIMPUTE2_INFO\tRS_ID\tESS\tis_snp\n")
-        output_filt.write("CPTID\t"+line+"\tIMPUTE2_INFO\tRS_ID\tESS\tis_snp\n")
+        output_file.write("CHRPOS\tCPTID\t"+line+"\tIMPUTE2_INFO\tRS_ID\tESS\tis_snp\n")
+        output_filt.write("CHRPOS\tCPTID\t"+line+"\tIMPUTE2_INFO\tRS_ID\tESS\tis_snp\n")
     else:
       line = line.rstrip()
       arr = line.split('\t')
@@ -113,7 +113,7 @@ for file_input in files_input:
           rsid = snp[0]
       
       cptid = arr[chr_col]+":"+arr[pos_col]+":"+arr[ref_col]+":"+arr[alt_col]
-      # cptid = arr[chr_col]+":"+arr[pos_col]
+      chrpos = arr[chr_col]+":"+arr[pos_col]
       maf = float(arr[af_col])
       if maf > 0.5:
         maf = 1.-maf
@@ -122,13 +122,14 @@ for file_input in files_input:
       ess = mac*(1-maf)*info
       
       issnp = (arr[ref_col] in actg and arr[alt_col] in actg) + 0
+      
       if int(arr[pos_col]) == pos:
         lastpos = int(arr[pos_col])
-        outstring = cptid+"\t"+line+'\t'+str(info)+'\t'+rsid+'\t'+str(ess)+'\t'+str(issnp)+'\n'
+        outstring = chrpos+'\t'+cptid+"\t"+line+'\t'+str(info)+'\t'+rsid+'\t'+str(ess)+'\t'+str(issnp)+'\n'
         if ess > 30 and info > 0.3:
           output_file.write(outstring)
         else:
-          output_filt.write(outstring)
+          output_file.write(outstring)
       elif snp == "":
         break
       else:
@@ -136,9 +137,9 @@ for file_input in files_input:
         # print("Variant "+arr[chr_col]+":"+arr[pos_col]+" is not in the metric file!")
         # input_keep_list.seek(0,0)
         if mac > 30:
-          output_file.write(cptid+"\t"+line+'\t\t\t\t\n')
+          output_filt.write(chrpos+'\t'+cptid+"\t"+line+'\t\t\t\t'+str(issnp)+'\n')
         else:
-          output_filt.write(cptid+"\t"+line+'\t\t\t\t\n')
+          output_filt.write(chrpos+'\t'+cptid+"\t"+line+'\t\t\t\t'+str(issnp)+'\n')
         
   input_keep_list.close() 
   input_results.close()

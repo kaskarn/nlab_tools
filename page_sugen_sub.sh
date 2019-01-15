@@ -57,6 +57,18 @@ case $1 in
 	covar="$2"
 	shift
 	;;
+  --chr)
+  chr="$2"
+  shift
+  ;;
+  --gen)
+  genf="$2"
+  shift
+  ;;
+  -p|--phen)
+  pheno_overwrite="$2"
+  shift
+  ;;
 	--aggreg)
 	aggreg=true
 	;;
@@ -87,10 +99,10 @@ esac
 shift
 done
 [[ $single == "true" ]] || back="\""
-
 [[ -z $trait ]] && err="ERROR: Need a list of traits. \n$err"
 [[ ! -z $opts || ! -z $covar ]] && [[ -z $outdir ]] && err="ERROR: Must specify -d when using -f or -o. \n$err"
 [[ -z $outdir ]] && outdir="output"
+[[ -z $chr ]] || opts="$opts --extract-chr $chr"
 
 for s in $study; do
   id_col="analysis_id"
@@ -136,11 +148,23 @@ for s in $study; do
     gen="$megagen/MEGA/imputed_data/vcf"
     d_form="age+gender2+rr_d+EV1+EV2+EV3+EV4+EV5+EV6+EV7+EV8+EV9+EV10+sol_center_s+sol_center_b+sol_center_c+sol_center_m+whi_regnum_2+whi_regnum_3+whi_regnum_4"
     ;;
+    charge_ecg)
+    phen="/proj/epi/CVDGeneNas/antoine/CHARGE_ECG_GWAS/phenotypes/ecg_charge_sol_all.txt"
+    gen="$megagen/MEGA/imputed_data/vcf"
+    d_form="age+gender2+rr_d+EV1+EV2+EV3+EV4+EV5+EV6+EV7+EV8+EV9+EV10+sol_center_s+sol_center_c+sol_center_m+height+bmi"
+    ;;
+    charge_ecg_res)
+    phen="/proj/epi/CVDGeneNas/antoine/CHARGE_ECG_GWAS/phenotypes/ecg_charge_sol_all.txt"
+    gen="$megagen/MEGA/imputed_data/vcf"
+    d_form="EV1+EV2+EV3+EV4+EV5+EV6+EV7+EV8+EV9+EV10"
+    ;;
     *)
     err="ERROR: Study name $s not recognized. \n$err"
     continue
     ;;
   esac
+  
+  [[ -z "$pheno_overwrite" ]] || phen=$pheno_overwrite
   [[ $s == "chani" ]] && s="mega"
   pyscript="/proj/epi/CVDGeneNas/antoine/bin/rtao/sugen_out_filter_gwas.py"
   [[ $s =~ "mega" ]] && pyscript="/proj/epi/CVDGeneNas/antoine/bin/rtao/sugen_out_filter_mega.py"
@@ -151,7 +175,7 @@ for s in $study; do
   diff=`comm -23 <(echo $traitlist | tr " " "\n") <(echo $traitfound | tr " " "\n")`
   [[ "$traitlist" == "$traitfound" ]] || err="ERROR: traits $diff  not found in $s. \n$err"
 
-
+ 
   form=$covar
   [[ -z $form ]] && form=$d_form
   for t in $trait; do
@@ -160,7 +184,12 @@ for s in $study; do
     file_submit="$dir_out/submit.out"
     echo "#!/bin/bash" > $file_submit
     
-    for f in $(find $gen -wholename "*vcf.gz" | grep -v multi_allele | grep -v remapped); do
+    #restrict to single genetic file if option given
+    allgenf=$(find $gen -wholename "*vcf.gz" | grep -v multi_allele | grep -v remapped)
+    [[ -z $genf ]] || allgenf=$genf
+    
+    #Main loop over each gen file
+    for f in $allgenf; do
       fn=`basename $f`
       if [[ -z $chunksize ]]; then
         callstr="$sugen --pheno $phen --id-col $id_col --family-col $fid_col --vcf $f --formula $t=$form --unweighted --out-prefix $dir_out/$t.$fn  $modopts $opts --dosage; read linen fnow <<< \`wc -l $dir_out/$t.$fn.wald.out\`; [[ \${linen} -eq 1 ]] && rm $dir_out/$t.$fn.wald.out" 

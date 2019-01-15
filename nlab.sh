@@ -18,7 +18,7 @@ case $cmd in
   wrap="bash $rundir/aspu_julia.sh $@"
   ;;
   easyplot)
-  wrap="bash $rundir/ES_mkplot.sh $@"
+  bash $rundir/ES_mkplot.sh $@
   ;;
   easyld)
   wrap="bash $rundir/make_ld_loci.sh $@"
@@ -43,6 +43,12 @@ case $cmd in
   ;;
   easy_metal)
   wrap="bash $rundir/metal_gwas_ecgsubmit.sh $@"
+  ;;
+  selectcols)
+  bash $rundir/selectcols.sh $@
+  ;;
+  compute_covar)
+  julia $rundir/compute_covar.jl $@
   ;;
 esac
 

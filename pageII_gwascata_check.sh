@@ -1,5 +1,5 @@
-#Antoine Baldassari baldassa@email.unc.edu
 #!/bin/bash
+#Antoine Baldassari baldassa@email.unc.edu
 #to call: bash thisscript study trait catalogue_trait_name. Loop for qt:
 # studies=("whims" "garnet" "gecco" "mopmap" "hipfx" "share" "lls") #"aric_eur" "aric_afr" 
 # for s in ${studies[@]}

@@ -18,10 +18,11 @@ chr="chr"
 pos="pos"
 pval="Pvalue"
 pskip="0.1"
-pline="5E-8"
+pline="5E-9"
 pathout=`pwd`
 name="myplot"
 sep="TAB"
+autosom="0"
 
 while [[ $# -gt 1 ]]
 do
@@ -63,6 +64,10 @@ case $key in
 	pos="$2"
 	shift
 	;;
+  --pline)
+  pline="$2"
+  shift
+  ;;
 	-s|--sep)
 	sep="$2"
 	shift
@@ -91,6 +96,9 @@ case $key in
 	pskip="$2"
 	shift
 	;;
+  --autosom)
+  autosom="1"
+  ;;
     *)
     ;;
 esac
@@ -105,14 +113,22 @@ echo -e "\t--pathOut $pathout\n" >> $tmecf
 echo -e "EASYIN\t--fileIn $filein" >> $tmecf
 echo -e "\t--fileInShortName $type\n" >> $tmecf
 
+
+
 if [ $type == "man" ] ; then
 	echo -e "START EASYSTRATA\n" >> $tmecf
+  if [ $autosom == "1" ] ; then
+    echo -e "FILTER\t--rcdFilter ${chr}<=22\n\t--strFilterName tmpname_esplot\n" >> $tmecf
+  fi
 	echo -e "MHPLOT\t--colMHPlot $pval" >> $tmecf
-	echo -e "\t--anumAddPvalLine $pline" >> $tmecf
+	echo -e "\t--anumAddPvalLine $pline\n\t--blnPlotVerticalLines 0" >> $tmecf
 	[[ ! -z "$annot" ]] && echo -e "\t--fileAnnot ${annot}\n\t--numAnnotPvalLim 5e-8" >> $tmecf
 fi
 if [ $type == "qq" ] ; then
 	echo -e "START EASYQC\n" >> $tmecf
+  if [ $autosom == "1" ] ; then
+    echo -e "FILTER\t--rcdFilter ${chr}<=22\n\t--strFilterName tmpname_esplot\n" >> $tmecf
+  fi
 	echo -e "QQPLOT\t--acolQQPlot $pval" >> $tmecf
 	[[ ! -z "$remove" ]] && echo -e "\t--fileRemove $remove\n\t--strRemovedColour blue" >> $tmecf
 	[[ -z "$nolambda" ]] && echo -e "\t--blnAddLambdaGC 1" >> $tmecf
@@ -120,7 +136,7 @@ fi
 if [ $type == "miami" ] ; then
 	echo -e "START EASYSTRATA\n" >> $tmecf
 	echo -e "MIAMIPLOT\t--colMIAMIPlotUp $pvalup\n\t--colMIAMIPlotDown $pvaldown " >> $tmecf
-	echo -e "\t--anumAddPvalLine $pline" >> $tmecf
+	echo -e "\t--anumAddPvalLine $pline\n\t--blnPlotVerticalLines 0" >> $tmecf
 	[[ ! -z "$annot" ]] && echo -e "\t--fileAnnot ${annot}\n\t--numAnnotPvalLim 5e-8" >> $tmecf
 fi
 echo -e "\t--colInChr $chr" >> $tmecf
@@ -140,3 +156,4 @@ Rscript $tmR $tmecf
 tm=`basename $tmecf`
 
 rm $tmR $tmecf $pathout/$tm*
+
